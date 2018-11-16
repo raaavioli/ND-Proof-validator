@@ -1,0 +1,12 @@
+[p].
+t.
+[	
+	[1, p, premise],
+	[
+		[2, neg(p), assumption],
+		[3, p,	copy(1)],
+		[4, cont, negel(2,3)]
+	],
+	[5, cont, copy(4)],
+	[6, t, contel(5)]
+].

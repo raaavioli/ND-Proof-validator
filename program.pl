@@ -126,6 +126,10 @@ iterate_proof(Prems, Goal, [[Row, cont, negel(X,Y)]|Rest], Proof) :-
 	search_line(Row, X, Prop, Proof, Proof),
 	search_line(Row, Y, neg(Prop), Proof, Proof),
 	X < Row, Y < Row,
+	iterate_proof(Prems, Goal, Rest, Proof);
+	search_line(Row, X, neg(Prop), Proof, Proof),
+	search_line(Row, Y, Prop, Proof, Proof),
+	X < Row, Y < Row,
 	iterate_proof(Prems, Goal, Rest, Proof).
 
 /**	Contradiction-Elimination
@@ -163,6 +167,8 @@ iterate_proof(Prems, Goal, [[Row, neg(P), mt(X,Y)]|Rest], Proof) :-
 	|- (A OR !A)
 */
 iterate_proof(Prems, Goal, [[Row, or(P, neg(P)), lem]|Rest], Proof) :-
+	iterate_proof(Prems, Goal, Rest, Proof).
+iterate_proof(Prems, Goal, [[Row, or(neg(P), P), lem]|Rest], Proof) :-
 	iterate_proof(Prems, Goal, Rest, Proof).
 
 /**

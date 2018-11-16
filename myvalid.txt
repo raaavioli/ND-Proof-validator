@@ -1,0 +1,19 @@
+[].
+imp( and(p,or(q,r)) , or(and(p,q),r) ).
+[
+	[
+		[1,and(p,or(q,r)),assumption],
+		[2,p,andel1(1)],
+		[3,or(q,r),andel2(1)],
+		[	
+			[4,q,assumption],
+			[5,and(p,q),andint(2,4)],
+			[6,or(and(p,q),r),orint1(5)]
+		],[
+			[7,r,assumption],
+			[8,or(and(p,q),r),orint2(7)]
+		],
+		[9,or(and(p,q),r),orel(3,4,6,7,8)]
+	],
+	[10,imp( and(p,or(q,r)) , or(and(p,q),r) ), impint(1,9)]	
+].

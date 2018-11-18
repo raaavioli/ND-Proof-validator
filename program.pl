@@ -268,7 +268,6 @@ is_empty([]).
 is_empty([_,_]) :- fail.
 
 /** Implements the Implication-proposition */
-imp(true, Q) :- Q.
 imp(P, true).
 imp(fail, fail).
 

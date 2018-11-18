@@ -1,2 +1,7 @@
 labb2.*
 paul_*
+*.aux
+*.log
+*.gz
+*.toc
+_minted-Labreport/*

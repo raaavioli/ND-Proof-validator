@@ -159,8 +159,8 @@ För att implementera alla regler i Figur \ref{fig:ruletable} användes alla ova
 \section{Diskussion}
 Programmet som skrevs kan slutligen passera alla de tester som var en del i uppgiftsunderlaget, alltså valid01-valid21 samt invalid01-invalid28. Jag bedömer att det bekräftar att programmet håller för de allra flesta bevis. 
 
-En viktig sak att tillägga är dock att alla regler inte är kommutativt definierade. Ett exempel, som nu är åtgärdat, men som från början
-inte fungerade korrekt, även om alla testfall lyckades, var att LEM för or(P, neg(P)) returnerade sant, men LEM för or(neg(P), P) var falskt. Detsamma gäller fortfarande för t.ex orel, vilket är beskrivet som kommentar i programkoden för predikatet i Appendix A. Problemet är där att
+En viktig sak att tillägga är dock att alla regler inte är kommutativt definierade. Ett exempel som nu är åtgärdat, men som från början
+inte fungerade korrekt även om alla testfall lyckades, var att LEM för or(P, neg(P)) returnerade sant, men LEM för or(neg(P), P) var falskt. Detsamma gäller fortfarande för t.ex orel, vilket är beskrivet som kommentar i programkoden för predikatet i Appendix A. Problemet är där att
 det spelar roll för orel(X,Y,Z,U,V) om box Y-Z förekommer före eller efter U-V i programmet givet de antaganden och slutsatser som är kopplade till respektive box.
 
 I övrigt fungerar det mesta som det ska.

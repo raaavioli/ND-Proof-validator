@@ -143,7 +143,7 @@ iterate_proof(Prems, Goal, [[[Row, Prop, assumption]|NextInBox] | Rest], Proof) 
         iterate_proof(Prems, Goal, NextInBox, Proof),
         iterate_proof(Prems, Goal, Rest, Proof).
 \end{minted}
-som säger att om vi stöter på en rad där första elementet är en lista vars första element i sin tur har regeln ``assumption``, då måste \mintinline{iterate_proof/4} vara sant både om vi itererar igenom den inre listan såväl som resten av beviset utanför denna nestade lista. 
+som säger att om vi stöter på en rad där första elementet är en lista vars första element i sin tur har regeln ``assumption``, då måste \mintinline{prolog}{iterate_proof/4} vara sant både om vi itererar igenom den inre listan såväl som resten av beviset utanför denna nestade lista. 
 
 Med andra ord stöter vi på en box om och endast om första regeln i en nestad lista är ett antagande. I ett sådant fall måste vi kunna följa såväl sublistan som resten av beviset och komma fram till att båda bevisen enskilt är sanna. Detta är rekursivt möjligt eftersom ett bevis/subbevis är sant om och endast om vi i slutet av respektive bevis kan unifiera \mintinline{prolog}{iterate_proof(_, _, [], Proof)}, som förklarat i \ref{subsec:iterateproof}.
 
@@ -156,8 +156,18 @@ För att implementera alla regler i Figur \ref{fig:ruletable} användes alla ova
   \label{fig:ruletable}
 \end{figure}
 
+\section{Diskussion}
+Programmet som skrevs kan slutligen passera alla de tester som var en del i uppgiftsunderlaget, alltså valid01-valid21 samt invalid01-invalid28. Jag bedömer att det bekräftar att programmet håller för de allra flesta bevis. 
 
-\section{Appendix A. Program code}
+En viktig sak att tillägga är dock att alla regler inte är kommutativt definierade. Ett exempel, som nu är åtgärdat, men som från början
+inte fungerade korrekt, även om alla testfall lyckades, var att LEM för or(P, neg(P)) returnerade sant, men LEM för or(neg(P), P) var falskt. Detsamma gäller fortfarande för t.ex orel, vilket är beskrivet som kommentar i programkoden för predikatet i Appendix A. Problemet är där att
+det spelar roll för orel(X,Y,Z,U,V) om box Y-Z förekommer före eller efter U-V i programmet givet de antaganden och slutsatser som är kopplade till respektive box.
+
+I övrigt fungerar det mesta som det ska.
+\newpage
+\section{Appendix A. Programkod}
+Appendix A innehåller all programkod inklusive kommentarer som beskriver när varje predikat är sant/falskt.
+
 \begin{minted}{prolog}
 /**
         Enter url to input-file where:
@@ -425,6 +435,10 @@ iterate_proof(Prems, Goal, [[[Row, Prop, assumption]|NextInBox] | Rest], Proof) 
 
 /**     COPY
         Lets us copy something already proved into a later stage of the proof
+        
+        True if: there is any prop at row X and that X is smaller than row.
+        
+        The rest of the proof also has to be true.
 */
 iterate_proof(Prems, Goal, [[Row, Prop, copy(X)]|Rest], Proof) :-
         search_line(Row, X, Prop, Proof, Proof),
@@ -434,6 +448,13 @@ iterate_proof(Prems, Goal, [[Row, Prop, copy(X)]|Rest], Proof) :-
 /**     Proof-By-Contradiction
         Assuming not(Prop) and being able to show a Contradiction
         lets us conclude that Prop is true.
+        
+        True if: We can find a box starting on X containing neg(Prop) 
+        where Prop is an arbitrary proposition. The box starting on row X
+        also has to end on row Y containing cont, stating a contradiction
+        was found.
+        
+        The rest of the proof also has to be true.
 */
 iterate_proof(Prems, Goal, [[Row, Prop, pbc(X,Y)]|Rest], Proof) :-
         search_box(Row, X, neg(Prop), Y, cont, Proof),
@@ -444,6 +465,8 @@ iterate_proof(Prems, Goal, [[Row, Prop, pbc(X,Y)]|Rest], Proof) :-
         Lets us, given a rule on row "Call_row", check whether
         a box starting on BStart_row and ending on BEnd_row is
         valid, contains the Propositions we assume and accessible from Call_row.
+        
+        True if: See description under 2.3 search_box/6 in report
 */
 search_box(Call_row, BStart_row, BStart_prop, BEnd_row, BEnd_prop, Proof) :-
         call_row_after_box( BStart_row, Call_row, Proof ),
@@ -451,7 +474,11 @@ search_box(Call_row, BStart_row, BStart_prop, BEnd_row, BEnd_prop, Proof) :-
         last(Rest, [BEnd_row, BEnd_prop, _]),
         first(Rest, [BStart_row, BStart_prop, _]).
 
-/** A simple predicate telling if H is the first element of a List */
+/** A simple predicate telling if H is the first element of a List 
+	
+	True if: the second argument is unifiable with the head of the list 
+	passed as first argument.
+*/
 first([H|T], H).
 
 /**
@@ -464,8 +491,10 @@ first([H|T], H).
                 e]
         f]
         The proposition tells us if for example the box c-d is 
-        accessible from a row X. if X = e, the proposition in this 
-        case is true. Any other variable would return false as Callrow.
+        accessible from a row X. 
+        
+        True if: X = e and Boxstart = c or X = f and Boxstart = b, the proposition in this 
+        case is true. Any other variable combination would return false.
 */
 call_row_after_box(Boxstart, Callrow, [[[Boxstart, _, _]|Boxrest]|Rest]) :-
         member([Callrow,_,_], Rest).
@@ -478,6 +507,8 @@ call_row_after_box( Boxstart, Callrow, [H|Rest] ) :-
         Looks for a specific "line"/proofrow in the Proof.
         If it is found, and it is found through valid_boxing,
         then search_line is true.
+        
+        True if: For further explanation, see 2.2 in report.
 */
 search_line(Call_row, Prop_row, Prop, [[Prop_row, Prop, _]|Rest], Proof) :- 
 		valid_boxing(Prop_row, Call_row, Proof).
@@ -490,6 +521,8 @@ search_line(Call_row, Prop_row, Prop, [_|Rest], Proof) :-
         A boxing is valid if we can find a row R2
         given the Rest of the proof following R1 iterating
         sequentially through Rest.
+        
+        True if: See 2.2 in report
 */
 valid_boxing(R1, R2, Proof) :-
         R1 < R2,
@@ -501,6 +534,8 @@ valid_boxing(R1, R2, Proof) :-
 
 /**     Looks for a certain row of a proof and returns the rest of the proof given
         that found row.
+        
+        True if: see 2.2 in report
 */
 findRowIn(Row, [[Row, P, R]|Rest], [[Row, P, R]|Rest]).
 findRowIn(Row, [[H|T]|Proof], Rest) :-
@@ -508,24 +543,91 @@ findRowIn(Row, [[H|T]|Proof], Rest) :-
 findRowIn(Row, [_|Proof], Rest) :-
          findRowIn(Row, Proof, Rest).
 
-/** Tells if a list is empty */
+/** Tells if a list is empty 
+	
+	True if: the argument is an empty list
+	Fails if: The argument is any list containing more than one element
+*/
 is_empty([]).
 is_empty([_,_]) :- fail.
 
-/** Implements the Implication-proposition */
+/** Implements the Implication-proposition 
+	
+	Fails if: imp(fail, true)
+	True if: any other combination of true/fail
+*/
 imp(P, true).
 imp(fail, fail).
 
-/** Implements logical-And */
+/** Implements logical-And 
+
+	True if: Both P and Q are true, false otherwise
+*/
 and(P, Q) :- P, Q.
 
-/** Implements logical-Or */
+/** Implements logical-Or 
+	
+	True if: Either P or Q (or both) are true.
+	Fails if: Neither are true
+*/
 or(P, true).
 or(true, Q).
 
-/** Implements negation */
+/** Implements negation 
+
+	True if: We cannot prove X using prolog's negation as failure.
+*/
 neg(X) :- \+X.
 \end{minted}
+\newpage
+\section{Appendix B. Exempelbevis}
+Det första beviset är ett sant bevis som bygger på tautologin 
+\begin{equation}
+\vdash \phi \wedge (\psi \vee \delta) \rightarrow (\phi \wedge \psi) \vee \delta.
+\end{equation}
+Enligt programmets input-syntax implementerades följande bevis som exempel på ett korrekt bevis:
+\begin{minted}{prolog}
+/* Valid proof */
+[].
+imp( and(p,or(q,r)) , or(and(p,q),r) ).
+[
+	[
+		[1,and(p,or(q,r)),assumption],
+		[2,p,andel1(1)],
+		[3,or(q,r),andel2(1)],
+		[	
+			[4,q,assumption],
+			[5,and(p,q),andint(2,4)],
+			[6,or(and(p,q),r),orint1(5)]
+		],[
+			[7,r,assumption],
+			[8,or(and(p,q),r),orint2(7)]
+		],
+		[9,or(and(p,q),r),orel(3,4,6,7,8)]
+	],
+	[10,imp( and(p,or(q,r)) , or(and(p,q),r) ), impint(1,9)]	
+].
+\end{minted}
+När beviset körs i programmet returnerar programmet true.
 
+Ett exempel på ett felaktigt bevis skulle vara om vi påstod $\phi \vdash \psi$,
+detta implementerades som ett motsägelsebevis genom:
+\begin{minted}{prolog}
+/* Invalid proof */
+[p].
+t.
+[	
+	[1, p, premise],
+	[
+		[2, neg(p), assumption],
+		[3, p,	copy(1)],
+		[4, cont, negel(2,3)]
+	],
+	[5, cont, copy(4)],
+	[6, t, contel(5)]
+].
+\end{minted}
+Detta bevis returnerar falskt eftersom mitt program inte tillåter att kopiera från en rad på en högre box-nivå raden där copy själv används, vilket är sunt. Annars skulle vi som enligt detta exempel kunna kopiera godtyckliga påståenden och bevisa sanna saker från t.ex godtyckliga antaganden.
 
+Om prologs inbyggda "trace"-program körs i bakgrunden kan man se att programmet misslyckas när den försöker bevisa rad 5 och därmed returnerar false.
 \end{document}
